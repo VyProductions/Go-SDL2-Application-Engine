@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"main/engine"
 	"main/scenes"
 
@@ -12,43 +11,53 @@ func main() {
 	// Start Process Engine
 	e := new(engine.Engine)
 
+	// Terminate Process Engine When Exiting
+	defer e.Quit()
+
 	if err := e.Init(); err != nil {
 		panic(err)
 	}
 
-	// Initialize Main Menu
+	// Initialize Main Menu Screen
 	var mainMenu scenes.MainMenu
 
 	if err := mainMenu.Init(e); err != nil {
 		panic(err)
 	}
 
+	// Initialize Map Screen
+	var mapDisplay scenes.MapDisplay
+
+	if err := mapDisplay.Init(e); err != nil {
+		panic(err)
+	}
+
 	// Process Loop
+	var err error
 	running := true
 
 	for running {
-		e := sdl.PollEvent()
+		event := sdl.PollEvent()
 
-		if e != nil {
-			switch e.(type) {
+		if event != nil {
+			switch t := event.(type) {
 			case *sdl.KeyboardEvent:
-				fmt.Println("Keyboard Event.")
+				err = e.HandleKeyboard(t)
 			case *sdl.MouseMotionEvent:
-				fmt.Println("MouseMotion Event.")
+				err = e.HandleMouseMotion(t)
 			case *sdl.MouseButtonEvent:
-				fmt.Println("MouseButton Event.")
+				err = e.HandleMouseButton(t)
 			case *sdl.MouseWheelEvent:
-				fmt.Println("MouseWheel Event.")
+				err = e.HandleMouseWheel(t)
 			case *sdl.QuitEvent:
-				fmt.Println("Quit Event.")
 				running = false
-			default:
+			}
+
+			if err != nil {
+				panic(err)
 			}
 		}
-	}
 
-	// Terminate Process Engine
-	if err := e.Quit(); err != nil {
-		panic(err)
+		e.Render()
 	}
 }
